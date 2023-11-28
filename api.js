@@ -214,10 +214,60 @@ function getVesselsInPort(shipPort, cb) {
   });
 }
 
+function getVesselsByDestinationPort(shipPort, cb) {
+  const url = `https://www.marinetraffic.com/en/reports?asset_type=vessels&columns=flag,shipname,photo,recognized_next_port,reported_eta,reported_destination,current_port,imo,ship_type,show_on_live_map,time_of_latest_position,lat_of_latest_position,lon_of_latest_position,current_port_country,notes&recognized_next_port_in_name=${shipPort}`;
+  debug('getVesselsByDestinationPort', url);
+
+  const headers={
+  'accept': '*/*',
+  'Accept-Language': 'en-US,en;q=0.5',
+  'Accept-Encoding': 'gzip, deflate, brotli',
+  'Vessel-Image': '0053e92efe9e7772299d24de2d0985adea14',
+  'X-Requested-With': 'XMLHttpRequest'
+}
+  const options = {
+    url,
+    headers,
+    json: true,
+    gzip: true,
+    deflate: true,
+    brotli:true
+   };
+  request(options, function (error, response, html) {
+    if (!error && response.statusCode == 200 || typeof response != 'undefined' && response.statusCode == 403) {
+
+
+    return cb(response.body.data.map((vessel) => ({
+      name: vessel.SHIPNAME,
+      id: vessel.SHIP_ID,
+      lat: Number(vessel.LAT),
+      lon: Number(vessel.LON),
+      timestamp: vessel.LAST_POS,
+      mmsi: vessel.MMSI,
+      imo: vessel.IMO,
+      callsign: vessel.CALLSIGN,
+      speed: Number(vessel.SPEED),
+      area: vessel.AREA_CODE,
+      type: vessel.TYPE_SUMMARY,
+      country: vessel.COUNTRY,
+      destination: vessel.RECOGNIZED_DESTINATION,
+      port_current_id: vessel.PORT_ID,
+      port_current: vessel.CURRENT_PORT,
+      port_next_id: vessel.NEXT_PORT_ID,
+      port_next: vessel.NEXT_PORT_NAME,
+    })));      
+    } else {
+      debug('error in getVesselsByDestinationPort');
+      cb({ error: 'an unknown error occured' });
+      return false;
+    }
+  });
+}
 
 module.exports = {
   getLocationFromVF: getLocationFromVF,
   getLocationFromMT: getLocationFromMT,
   getLocation: getLocation,
   getVesselsInPort:getVesselsInPort,
+  getVesselsByDestinationPort:getVesselsByDestinationPort,
 };
