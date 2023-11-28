@@ -59,7 +59,7 @@ function init(port) {
   });
   
   app.get('/getVesselsByDestinationPort/:shipPort', (req, res) => {
-    api.getVesselsInPort(req.params.shipPort, (result) => {
+    api.getVesselsByDestinationPort(req.params.shipPort, (result) => {
       res.send(result);
     });
   });  
