@@ -64,6 +64,12 @@ function init(port) {
     });
   });  
 
+  app.get('/getVesselInfo/:shipName', (req, res) => {
+    api.getVesselInfo(req.params.shipName, (result) => {
+      res.send(result);
+    });
+  });
+
   app.listen(app.get('port'), function() {
     console.log('Node app is running on port', app.get('port'));
   });

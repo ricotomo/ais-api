@@ -213,7 +213,7 @@ function getVesselsInPort(shipPort, cb) {
     }
   });
 }
-
+// this function takes a port as input and checks which ships are headed there
 function getVesselsByDestinationPort(shipPort, cb) {
   const url = `https://www.marinetraffic.com/en/reports?asset_type=vessels&columns=flag,shipname,photo,recognized_next_port,reported_eta,reported_destination,current_port,imo,ship_type,show_on_live_map,time_of_latest_position,lat_of_latest_position,lon_of_latest_position,current_port_country,notes&recognized_next_port_in_name=${shipPort}`;
   debug('getVesselsByDestinationPort', url);
@@ -264,10 +264,75 @@ function getVesselsByDestinationPort(shipPort, cb) {
   });
 }
 
+// this function takes a ship name as input and retrieves data on it
+function getVesselInfo(shipName, cb){
+  const url = `https://www.marinetraffic.com/en/reports?asset_type=vessels&columns=flag,shipname,photo,recognized_next_port,reported_eta,reported_destination,current_port,imo,ship_type,show_on_live_map,time_of_latest_position,lat_of_latest_position,lon_of_latest_position,current_port_country,notes&shipname=${shipName}`;
+  
+  debug('getVesselInfo', url);
+
+  const headers={
+  'accept': '*/*',
+  'Accept-Language': 'en-US,en;q=0.5',
+  'Accept-Encoding': 'gzip, deflate, brotli',
+  'Vessel-Image': '0053e92efe9e7772299d24de2d0985adea14',
+  'X-Requested-With': 'XMLHttpRequest'
+}
+  const options = {
+    url,
+    headers,
+    json: true,
+    gzip: true,
+    deflate: true,
+    brotli:true
+   };
+  request(options, function (error, response, html) {
+    console.log('Callback executed!');
+    if (!error && response.statusCode == 200 || typeof response != 'undefined' && response.statusCode == 403) {
+
+    //console.log(url)
+    //console.log('Response:', response);
+    //console.log('headers:', response.headers);
+    console.log(response.statusCode)
+    console.log(shipName)
+    return cb(response.body.data.map((vessel) => ({
+      name: vessel.SHIPNAME,
+      id: vessel.SHIP_ID,
+      lat: Number(vessel.LAT),
+      lon: Number(vessel.LON),
+      timestamp: vessel.LAST_POS,
+      mmsi: vessel.MMSI,
+      imo: vessel.IMO,
+      callsign: vessel.CALLSIGN,
+      speed: Number(vessel.SPEED),
+      area: vessel.AREA_CODE,
+      type: vessel.TYPE_SUMMARY,
+      country: vessel.COUNTRY,
+      destination: vessel.RECOGNIZED_DESTINATION,
+      port_current_id: vessel.PORT_ID,
+      port_current: vessel.CURRENT_PORT,
+      port_next_id: vessel.NEXT_PORT_ID,
+      port_next: vessel.NEXT_PORT_NAME,
+    })));      
+    } else {
+      // if response.statusCode == 429:
+      //   time.sleep(wait_time)
+      debug(response.statusCode);
+      console.error('Response:', response);
+      console.error('Status Code:', response.headers);
+      console.error('Error:', error);
+      //console.error('html:', html);
+      debug('error in getVesselInfo');
+      cb({ error: 'an unknown error occured' });
+      return false;
+    }
+  });
+}
+
 module.exports = {
   getLocationFromVF: getLocationFromVF,
   getLocationFromMT: getLocationFromMT,
   getLocation: getLocation,
   getVesselsInPort:getVesselsInPort,
   getVesselsByDestinationPort:getVesselsByDestinationPort,
+  getVesselInfo:getVesselInfo,
 };
